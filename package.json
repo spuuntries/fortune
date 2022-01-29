@@ -1,0 +1,16 @@
+{
+  "name": "fortune",
+  "version": "3.5.8-luck",
+  "description": "Fortuuuuneeeee",
+  "main": "index.js",
+  "repository": "https://github.com/spuuntries/fortune.git",
+  "author": "spuuntries <kek@spuun.art>",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "dependencies": {
+    "discord.js": "^13.6.0",
+    "dotenv": "^14.3.2",
+    "enmap": "^5.8.7",
+    "express": "^4.17.2"
+  }
+}
