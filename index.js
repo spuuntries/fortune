@@ -125,6 +125,12 @@ client.on("messageCreate", (message) => {
         });
 
       // Generate a unique ID for the fortune.
+      let fortuneID =
+        db.get("fortunes").length > 0
+          ? db.get("fortunes")[db.get("fortunes").length - 1].id + 1
+          : 1;
+
+      /* Scrapped for the incremental ID instead.      
       let fortuneID = (() => {
         let id;
         do {
@@ -148,8 +154,6 @@ client.on("messageCreate", (message) => {
           },
         });
 
-      /* Scrapped for the 3-digit numerical ID instead.
-      let fortuneID = db.get("fortunes").length > 0 ? db.get("fortunes")[db.get("fortunes").length - 1].id + 1 : 1;
       let fortuneID = (() => {
         let id;
         do {
