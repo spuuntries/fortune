@@ -48,6 +48,20 @@ function split(arr, n) {
   return res;
 }
 
+/**
+ * Check if message author has (or one of) the staff role(s).
+ * @param {Discord.Message} message The message to check.
+ * @returns {boolean} Whether the author has the staff role.
+ * @example
+ * if (!isStaff(message)) return message.reply("You are not allowed to do that!");
+ */
+function isStaff(message) {
+  let staffRoles = procenv.STAFFROLES.split("|").map((x) => x.trim().trimEnd());
+  return (
+    message.member.roles.cache.filter((r) => staffRoles.includes(r.id)).size > 0
+  );
+}
+
 login();
 
 client.on("ready", () => {
@@ -93,10 +107,57 @@ client.on("messageCreate", (message) => {
 
   switch (args[0]) {
     case "add":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       if (!args[1])
-        return message.channel.send("You need to provide a fortune!");
+        return message.reply({
+          content: "You need to provide a fortune!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
+      if (args[1].length > 1500)
+        return message.reply({
+          content: "Your fortune is too long!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
 
       // Generate a unique ID for the fortune.
+      let fortuneID = (() => {
+        let id;
+        do {
+          if (
+            db
+              .get("fortunes")
+              .filter((x) => [...Array(998).keys()].includes(x.id)).length <= 0
+          ) {
+            logger("No more fortuneIDs available!");
+            return false;
+          }
+          id = crypto.randomInt(1, 999);
+        } while (fortunes.find((x) => x.id == id));
+        return id;
+      })();
+
+      if (!fortuneID)
+        return message.reply({
+          content: "Failed to generate a unique fortune ID!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
+      /* Scrapped for the 3-digit numerical ID instead.
+      let fortuneID = db.get("fortunes").length > 0 ? db.get("fortunes")[db.get("fortunes").length - 1].id + 1 : 1;
       let fortuneID = (() => {
         let id;
         do {
@@ -104,12 +165,15 @@ client.on("messageCreate", (message) => {
         } while (db.get("fortunes").filter((a) => a.id == id).length > 0);
         return id;
       })();
+      */
 
       // Add the fortune to the database.
       db.push("fortunes", {
         id: fortuneID,
         fortune: message.content.split(args[0])[1].trim().trimEnd(),
         opened: false,
+        timestamp: 0,
+        openedBy: "",
       });
 
       message
@@ -125,12 +189,30 @@ client.on("messageCreate", (message) => {
       break;
 
     case "remove":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       if (!args[1])
-        return message.channel.send("You need to provide a fortune ID!");
+        return message.reply({
+          content: "You need to provide a fortune ID!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
       let filtered = db.get("fortunes").filter((a) => a.id == args[1])[0];
 
       if (!filtered)
-        return message.channel.send("That fortune ID does not exist!");
+        return message.reply({
+          content: "That fortune ID does not exist!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
 
       db.set(
         "fortunes",
@@ -146,7 +228,12 @@ client.on("messageCreate", (message) => {
 
     case "list":
       if (db.get("fortunes").length == 0)
-        return message.channel.send("There are no fortunes!");
+        return message.reply({
+          content: "There are no fortunes!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
 
       let cookies = db.get("fortunes").map((a) => {
         if (a.opened) return "📜";
@@ -187,7 +274,16 @@ client.on("messageCreate", (message) => {
       break;
 
     case "clear":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       db.set("fortunes", []);
+
       message.reply({
         content: "Cleared all fortunes!",
         allowedMentions: {
@@ -197,6 +293,14 @@ client.on("messageCreate", (message) => {
       break;
 
     case "shuffle":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       db.set(
         "fortunes",
         (() => {
@@ -220,10 +324,19 @@ client.on("messageCreate", (message) => {
       break;
 
     case "clean":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       db.set(
         "fortunes",
         db.get("fortunes").filter((a) => !a.opened)
       );
+
       message.reply({
         content: "Cleaned all closed fortunes!",
         allowedMentions: {
@@ -234,9 +347,20 @@ client.on("messageCreate", (message) => {
 
     case "info":
       fortune = db.get("fortunes").filter((a) => a.id == args[1])[0];
+
       message.reply({
         content: `**Fortune ID:** ${fortune.id}\n**Status:** ${
           fortune.opened ? "Opened" : "Closed"
+        }${
+          isStaff(message)
+            ? `${
+                fortune.openedBy ? `\n**Opened by:** ${fortune.openedBy}` : ""
+              }${
+                fortune.timestamp
+                  ? `\n**Opened at:** <t:${fortune.timestamp}> (<t:${fortune.timestamp}:R>)`
+                  : ""
+              }`
+            : ""
         }`,
         allowedMentions: {
           repliedUser: false,
@@ -262,31 +386,69 @@ client.on("messageCreate", (message) => {
       })();
 
       fortune = db.get("fortunes")[int];
-      message.author.send(
-        `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`
-      );
+      try {
+        message.author.send(
+          `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`
+        );
 
-      db.set(
-        "fortunes",
-        db.get("fortunes").map((a) => {
-          if (a.id == fortune.id) a.opened = true;
-          return a;
-        })
-      );
+        db.set(
+          "fortunes",
+          db.get("fortunes").map((a) => {
+            if (a.id == fortune.id) {
+              a.opened = true;
+              a.openedBy = message.author.id;
+              // Set the timestamp to the current unix time.
+              a.timestamp = Date.now();
+            }
+            return a;
+          })
+        );
 
-      db.push("participated", message.author.id);
+        db.push("participated", message.author.id);
+      } catch (e) {
+        logger(`Error sending fortune to ${message.author.id}, ${e}`);
+        message.reply({
+          content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+      }
       break;
 
     case "unparticipate":
+      if (!isStaff(message))
+        return message.reply({
+          content: "You need to be a staff member to do that!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
       if (!args[1])
-        return message.channel.send("You need to provide a user ID!");
+        return message.reply({
+          content: "You need to specify a user ID!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       let user = message.guild.members.cache.get(args[1]);
 
-      if (!user) return message.channel.send("That user ID does not exist!");
+      if (!user)
+        return message.reply({
+          content: "That user ID doesn't exist!",
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+
       if (!db.get("participated").includes(user.id))
-        return message.channel.send(
-          "That user hasn't participated in a fortune!"
-        );
+        return message.reply({
+          content: `${user.member.displayName} hasn't opened a fortune yet!`,
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
 
       db.set(
         "participated",
@@ -302,17 +464,44 @@ client.on("messageCreate", (message) => {
       break;
 
     case "help":
+      if (!isStaff(message)) {
+        // Generate an embed for non-staff users.
+        let nonStaffEmbed = new Discord.MessageEmbed()
+          .setTitle("📚 Fortunes Help 📚")
+          .setDescription(
+            `Here are all the commands for the Fortune Bot!\n
+**${procenv.BOTPREFIX}fortune list** - Lists all the fortunes.
+**${procenv.BOTPREFIX}fortune <fortuneID>** - Opens a specific fortune.
+**${procenv.BOTPREFIX}fortune info <fortuneID>** - Shows info about a fortune.
+**${procenv.BOTPREFIX}fortune random or ${procenv.BOTPREFIX}fortune** - Opens a random fortune.
+**${procenv.BOTPREFIX}fortune help** - Shows this help message.`
+          )
+          .setColor("#CC9902")
+          .setFooter({
+            text: "Art Union Fortune Box.",
+          });
+
+        return message.reply({
+          embeds: [nonStaffEmbed],
+          allowedMentions: {
+            repliedUser: false,
+          },
+        });
+      }
+
       // Generate an embed for it cuz embeds r kooool
       let embed = new Discord.MessageEmbed()
         .setTitle("📚 Fortunes Help 📚")
         .setDescription(
-          `Here are all the commands for the Fortune Bot!\n\n**${procenv.BOTPREFIX}fortune add <fortune>** - Adds a fortune to the database.
+          `Here are all the commands for the Fortune Bot!\n
+**${procenv.BOTPREFIX}fortune add <fortune>** - Adds a fortune to the database.
 **${procenv.BOTPREFIX}fortune remove <fortuneID>** - Removes a fortune from the database.
 **${procenv.BOTPREFIX}fortune list** - Lists all the fortunes.
 **${procenv.BOTPREFIX}fortune clear** - Clears all the fortunes.
 **${procenv.BOTPREFIX}fortune shuffle** - Shuffles all the fortunes.
 **${procenv.BOTPREFIX}fortune info <fortuneID>** - Shows info about a fortune.
 **${procenv.BOTPREFIX}fortune random or ${procenv.BOTPREFIX}fortune** - Opens a random fortune.
+**${procenv.BOTPREFIX}fortune <fortuneID>** - Opens a specific fortune.
 **${procenv.BOTPREFIX}fortune unparticipate <userID>** - Removes a user from the \`participated\` list
 **${procenv.BOTPREFIX}fortune help** - Shows this help message.`
         )
@@ -331,25 +520,61 @@ client.on("messageCreate", (message) => {
       break;
 
     default:
-      if (isHex(args[0])) {
+      // if (isHex(args[0])) {
+      if (Number.isInteger(parseInt(args[0]))) {
         if (db.get("participated").includes(message.author.id))
-          return message.reply(`You've already opened a fortune!`);
-        fortune = db.get("fortunes").filter((a) => a.id == args[0])[0];
-        if (!fortune) return message.reply("That fortune ID does not exist!");
-        if (fortune.opened)
-          return message.reply("That fortune has already been opened!");
-        message.author.send({
-          content: `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`,
-        });
+          return message.reply({
+            content: `You've already opened a fortune!`,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          });
 
-        db.set(
-          "fortunes",
-          db.get("fortunes").map((a) => {
-            if (a.id == fortune.id) a.opened = true;
-            return a;
-          })
-        );
-        db.push("participated", message.author.id);
+        fortune = db.get("fortunes").filter((a) => a.id == args[0])[0];
+        if (!fortune)
+          return message.reply({
+            content: `That fortune ID doesn't exist!`,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          });
+
+        if (fortune.opened)
+          return message.reply({
+            content: `That fortune has already been opened!`,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          });
+
+        try {
+          message.author.send({
+            content: `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`,
+          });
+
+          db.set(
+            "fortunes",
+            db.get("fortunes").map((a) => {
+              if (a.id == fortune.id) {
+                a.opened = true;
+                a.openedBy = message.author.id;
+                // Set the timestamp to the current unix time.
+                a.timestamp = Date.now();
+              }
+              return a;
+            })
+          );
+
+          db.push("participated", message.author.id);
+        } catch (e) {
+          logger(`Error sending fortune to ${message.author.id}, ${e}`);
+          message.reply({
+            content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          });
+        }
       }
   }
 });
