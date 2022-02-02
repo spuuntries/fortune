@@ -123,14 +123,6 @@ client.on("messageCreate", (message) => {
           },
         });
 
-      if (args[1].length > 1500)
-        return message.reply({
-          content: "Your fortune is too long!",
-          allowedMentions: {
-            repliedUser: false,
-          },
-        });
-
       // Generate a unique ID for the fortune.
       let fortuneID = (() => {
         let id;
@@ -248,7 +240,7 @@ client.on("messageCreate", (message) => {
 
       for (let i = 0; i < rows.length; i += 3) {
         let embed = new Discord.MessageEmbed()
-          .setTitle("📜 Fortunes")
+          .setTitle("📜  Fortunes  📦")
           .setDescription(
             `Here are all the available fortunes!\n\n${rows
               .slice(i, i + 3)
@@ -263,7 +255,8 @@ client.on("messageCreate", (message) => {
                 .map((e) => e.split(" "))
                 .flat(1).length +
               i * 3
-            } of ${db.get("fortunes").length} fortunes.`,
+            } of ${db.get("fortunes").length} fortunes.
+📜 = Opened, 📦 = Unopened.`,
           })
           .setTimestamp();
 
