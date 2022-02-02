@@ -347,7 +347,7 @@ client.on("messageCreate", (message) => {
           isStaff(message)
             ? `${
                 fortune.openedBy
-                  ? `\n**Opened by:**${
+                  ? `\n**Opened by:** ${
                       client.users.cache.filter((a) => a.id == fortune.openedBy)
                         .length
                         ? client.users.cache.filter(
@@ -356,8 +356,7 @@ client.on("messageCreate", (message) => {
                         : "Unknown"
                     }`
                   : ""
-              }
-              ${
+              }${
                 fortune.timestamp
                   ? `\n**Opened at:** <t:${fortune.timestamp}> (<t:${fortune.timestamp}:R>)`
                   : ""
