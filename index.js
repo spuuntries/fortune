@@ -455,7 +455,11 @@ client.on("messageCreate", (message) => {
 
       if (!db.get("participated").includes(user.id))
         return message.reply({
-          content: `${user.member.displayName} hasn't opened a fortune yet!`,
+          content: `${
+            message.member.displayName
+              ? message.member.displayName
+              : message.author.username
+          } hasn't opened a fortune yet!`,
           allowedMentions: {
             repliedUser: false,
           },
