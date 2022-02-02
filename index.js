@@ -415,7 +415,11 @@ client.on("messageCreate", (message) => {
         .catch((e) => {
           logger(`Error sending fortune to ${message.author.id}, ${e}`);
           message.reply({
-            content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+            content: `I couldn't send you the fortune, ${
+              message.member.displayName
+                ? message.member.displayName
+                : message.author.username
+            }!\nPlease make sure you have your DMs open!`,
             allowedMentions: {
               repliedUser: false,
             },
@@ -577,7 +581,11 @@ client.on("messageCreate", (message) => {
           .catch((e) => {
             logger(`Error sending fortune to ${message.author.id}, ${e}`);
             message.reply({
-              content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+              content: `I couldn't send you the fortune, ${
+                message.member.displayName
+                  ? message.member.displayName
+                  : message.author.username
+              }!\nPlease make sure you have your DMs open!`,
               allowedMentions: {
                 repliedUser: false,
               },
