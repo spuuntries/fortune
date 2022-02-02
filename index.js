@@ -354,7 +354,7 @@ client.on("messageCreate", (message) => {
                             (a) => a.id == fortune.openedBy
                           )[0].tag
                         : "Unknown"
-                    }`
+                    } (${fortune.openedBy})`
                   : ""
               }${
                 fortune.timestamp
