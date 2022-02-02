@@ -399,7 +399,7 @@ client.on("messageCreate", (message) => {
               a.opened = true;
               a.openedBy = message.author.id;
               // Set the timestamp to the current unix time.
-              a.timestamp = Date.now() / 1000;
+              a.timestamp = Math.floor(Date.now() / 1000);
             }
             return a;
           })
@@ -560,7 +560,7 @@ client.on("messageCreate", (message) => {
                 a.opened = true;
                 a.openedBy = message.author.id;
                 // Set the timestamp to the current unix time.
-                a.timestamp = Date.now() / 1000;
+                a.timestamp = Math.floor(Date.now() / 1000);
               }
               return a;
             })
