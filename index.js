@@ -71,7 +71,8 @@ client.on("ready", () => {
 client.on("messageCreate", (message) => {
   if (
     message.author.bot ||
-    !message.content.toLowerCase().trim().startsWith(procenv.BOTPREFIX)
+    !message.content.toLowerCase().trim().startsWith(procenv.BOTPREFIX) ||
+    message.channel.type != "GUILD_TEXT"
   )
     return;
   const args = message.content
