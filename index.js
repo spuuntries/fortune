@@ -392,34 +392,35 @@ client.on("messageCreate", (message) => {
       })();
 
       fortune = db.get("fortunes")[int];
-      try {
-        message.author.send(
+      message.author
+        .send(
           `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`
-        );
+        )
+        .then(() => {
+          db.set(
+            "fortunes",
+            db.get("fortunes").map((a) => {
+              if (a.id == fortune.id) {
+                a.opened = true;
+                a.openedBy = message.author.id;
+                // Set the timestamp to the current unix time.
+                a.timestamp = Math.floor(Date.now() / 1000);
+              }
+              return a;
+            })
+          );
 
-        db.set(
-          "fortunes",
-          db.get("fortunes").map((a) => {
-            if (a.id == fortune.id) {
-              a.opened = true;
-              a.openedBy = message.author.id;
-              // Set the timestamp to the current unix time.
-              a.timestamp = Math.floor(Date.now() / 1000);
-            }
-            return a;
-          })
-        );
-
-        db.push("participated", message.author.id);
-      } catch (e) {
-        logger(`Error sending fortune to ${message.author.id}, ${e}`);
-        message.reply({
-          content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
-          allowedMentions: {
-            repliedUser: false,
-          },
+          db.push("participated", message.author.id);
+        })
+        .catch((e) => {
+          logger(`Error sending fortune to ${message.author.id}, ${e}`);
+          message.reply({
+            content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          });
         });
-      }
       break;
 
     case "unparticipate":
@@ -553,34 +554,35 @@ client.on("messageCreate", (message) => {
             },
           });
 
-        try {
-          message.author.send({
+        message.author
+          .send({
             content: `**Here's your fortune!**\n(Fortune ID: ${fortune.id})\n\n${fortune.fortune}`,
-          });
+          })
+          .then(() => {
+            db.set(
+              "fortunes",
+              db.get("fortunes").map((a) => {
+                if (a.id == fortune.id) {
+                  a.opened = true;
+                  a.openedBy = message.author.id;
+                  // Set the timestamp to the current unix time.
+                  a.timestamp = Math.floor(Date.now() / 1000);
+                }
+                return a;
+              })
+            );
 
-          db.set(
-            "fortunes",
-            db.get("fortunes").map((a) => {
-              if (a.id == fortune.id) {
-                a.opened = true;
-                a.openedBy = message.author.id;
-                // Set the timestamp to the current unix time.
-                a.timestamp = Math.floor(Date.now() / 1000);
-              }
-              return a;
-            })
-          );
-
-          db.push("participated", message.author.id);
-        } catch (e) {
-          logger(`Error sending fortune to ${message.author.id}, ${e}`);
-          message.reply({
-            content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
-            allowedMentions: {
-              repliedUser: false,
-            },
+            db.push("participated", message.author.id);
+          })
+          .catch((e) => {
+            logger(`Error sending fortune to ${message.author.id}, ${e}`);
+            message.reply({
+              content: `I couldn't send you the fortune, ${message.member.displayName}!\nPlease make sure you have your DMs open!`,
+              allowedMentions: {
+                repliedUser: false,
+              },
+            });
           });
-        }
       }
   }
 });
