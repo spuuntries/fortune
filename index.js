@@ -346,8 +346,18 @@ client.on("messageCreate", (message) => {
         }${
           isStaff(message)
             ? `${
-                fortune.openedBy ? `\n**Opened by:** ${fortune.openedBy}` : ""
-              }${
+                fortune.openedBy
+                  ? `\n**Opened by:**${
+                      client.users.cache.filter((a) => a.id == fortune.openedBy)
+                        .length
+                        ? client.users.cache.filter(
+                            (a) => a.id == fortune.openedBy
+                          )[0].tag
+                        : "Unknown"
+                    }`
+                  : ""
+              }
+              ${
                 fortune.timestamp
                   ? `\n**Opened at:** <t:${fortune.timestamp}> (<t:${fortune.timestamp}:R>)`
                   : ""
@@ -390,7 +400,7 @@ client.on("messageCreate", (message) => {
               a.opened = true;
               a.openedBy = message.author.id;
               // Set the timestamp to the current unix time.
-              a.timestamp = Date.now();
+              a.timestamp = Date.now() / 1000;
             }
             return a;
           })
@@ -551,7 +561,7 @@ client.on("messageCreate", (message) => {
                 a.opened = true;
                 a.openedBy = message.author.id;
                 // Set the timestamp to the current unix time.
-                a.timestamp = Date.now();
+                a.timestamp = Date.now() / 1000;
               }
               return a;
             })
