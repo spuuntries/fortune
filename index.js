@@ -128,9 +128,8 @@ client.on("messageCreate", (message) => {
         let id;
         do {
           if (
-            db
-              .get("fortunes")
-              .filter((x) => [...Array(998).keys()].includes(x.id)).length <= 0
+            db.get("fortunes").map((x) => x.id) ==
+            [...Array(999).keys()].map((x) => x + 1)
           ) {
             logger("No more fortuneIDs available!");
             return false;
